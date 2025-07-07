@@ -1,0 +1,114 @@
+// document.addEventListener("selectionchange", (event) => {
+//   const selection = event.target.value.substring(
+//     event.target.selectionStart,
+//     event.target.selectionEnd
+//   );
+
+//   setTimeout(() => {
+//     if (selection) {
+//       alert("Mouse event detected! Selected text: " + selection);
+//     }
+//   }, 1000);
+// });
+
+function debounce(func, delay) {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      func.apply(null, args);
+    }, delay);
+  };
+}
+
+let mouseX = 0;
+let mouseY = 0;
+
+// Track mouse position
+document.addEventListener("mousemove", (e) => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+});
+
+const handleSelection = () => {
+  const text = window.getSelection().toString().trim();
+  if (text && /^[a-zA-Z]+$/.test(text)) {
+    fetchWordDefinition(text);
+  } else {
+    // Remove popup when selection is cleared
+    document.getElementById("definitionPopup")?.remove();
+  }
+};
+
+const fetchWordDefinition = async (word) => {
+  try {
+    const response = await fetch(
+      `https://api.dictionaryapi.dev/api/v2/entries/en/${word}`
+    );
+    if (!response.ok) {
+      throw new Error("Could not get definition of this word");
+    }
+    const data = await response.json();
+    const definitions = data[0].meanings[0].definitions;
+
+    // Get all definitions as an array
+    const definitionTexts = definitions
+      .map((def, index) => `${index + 1}. ${def.definition}`)
+      .join("\n");
+
+    console.log("All definitions:", definitionTexts);
+
+    showPopup(word, definitionTexts);
+
+    sendToPipedream({
+      word,
+      definitionTexts,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("failed to fetch word definition:", error);
+  }
+};
+
+function showPopup(word, definitionTexts) {
+  // Add Google Font if not already added
+  if (
+    !document.querySelector(
+      'link[href*="fonts.googleapis.com/css2?family=Titillium+Web"]'
+    )
+  ) {
+    const fontLink = document.createElement("link");
+    fontLink.href =
+      "https://fonts.googleapis.com/css2?family=Titillium+Web:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700&display=swap";
+    fontLink.rel = "stylesheet";
+    document.head.appendChild(fontLink);
+  }
+
+  // Remove existing popup if it exists
+  document.getElementById("definitionPopup")?.remove();
+
+  // Position popup at mouse cursor (offset slightly to avoid covering cursor)
+  const popupX = mouseX + 10;
+  const popupY = mouseY - 10;
+
+  const modalHtml = `
+    <div id="definitionPopup" style="position: fixed; top: ${popupY}px; left: ${popupX}px; background: #292a2d; border: 1px solidrgb(1, 10, 36); padding: 15px; z-index: 10000; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); border-radius: 8px; max-width: 400px; font-family: 'Titillium Web', Arial, sans-serif; line-height: 1.4;">
+    <h2 style="color: #cfd0d3; font-size: 18px; margin: 0 0 10px 0; font-weight: 600; font-family: 'Titillium Web', Arial, sans-serif; line-height: 1.3;">Definition of ${word}</h2>
+    <p style="white-space: pre-line; font-size: 14px; line-height: 1.6; margin: 0 0 15px 0; color: #cfd0d3; font-family: 'Titillium Web', Arial, sans-serif; font-weight: 400;">${definitionTexts}</p>
+    <button onclick="document.getElementById('definitionPopup').remove()" style="margin-top: 10px; padding: 8px 15px; background: #007cba;outline:none; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-family: 'Titillium Web', Arial, sans-serif; font-weight: 600; line-height: 1.2;">Close</button>
+    </div>`;
+
+  document.body.insertAdjacentHTML("beforeend", modalHtml);
+}
+
+function sendToPipedream(data) {
+  fetch("https://eonn7e5d997c5tv.m.pipedream.net", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ data }),
+  });
+}
+
+document.addEventListener("selectionchange", debounce(handleSelection, 1000));
