@@ -31,8 +31,10 @@ document.addEventListener("mousemove", (e) => {
 });
 
 const handleSelection = () => {
+  //Make unselectable text selectable
+  document.body.style.userSelect = "text";
   const text = window.getSelection().toString().trim();
-  if (text && /^[a-zA-Z]+$/.test(text)) {
+  if (text) {
     fetchWordDefinition(text);
   } else {
     // Remove popup when selection is cleared
@@ -43,17 +45,53 @@ const handleSelection = () => {
 const fetchWordDefinition = async (word) => {
   try {
     const response = await fetch(
-      `https://api.dictionaryapi.dev/api/v2/entries/en/${word}`
+      `https://dictionaryapi.com/api/v3/references/collegiate/json/${encodeURIComponent(
+        word
+      )}?key=e9299ad3-f9cc-4ecf-919e-55f25b2326a2`
     );
+
+    console.log("Response status:", response.status);
+    console.log("Response headers:", response.headers);
+
     if (!response.ok) {
-      throw new Error("Could not get definition of this word");
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-    const data = await response.json();
-    const definitions = data[0].meanings[0].definitions;
+
+    const responseText = await response.text();
+    console.log("Raw response:", responseText);
+
+    // Try to parse as JSON
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error("JSON parse error:", parseError);
+      console.error("Response text:", responseText);
+      throw new Error("Invalid JSON response from API");
+    }
+
+    console.log("Parsed data:", data);
+
+    // Check if the response is valid and contains definitions
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      throw new Error("No definitions found");
+    }
+
+    // Check if the first result is a string (suggestions) rather than an object (definitions)
+    if (typeof data[0] === "string") {
+      throw new Error("Word not found, got suggestions instead");
+    }
+
+    // Merriam-Webster API structure: data[0].shortdef contains the definitions
+    const definitions = data[0].shortdef || [];
+
+    if (definitions.length === 0) {
+      throw new Error("No definitions available");
+    }
 
     // Get all definitions as an array
     const definitionTexts = definitions
-      .map((def, index) => `${index + 1}. ${def.definition}`)
+      .map((def, index) => `${index + 1}. ${def}`)
       .join("\n");
 
     console.log("All definitions:", definitionTexts);
@@ -66,7 +104,8 @@ const fetchWordDefinition = async (word) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("failed to fetch word definition:", error);
+    console.error("Merriam-Webster API failed:", error);
+    showPopup(word, "Definition not available. Please try again.");
   }
 };
 
@@ -93,9 +132,9 @@ function showPopup(word, definitionTexts) {
 
   const modalHtml = `
     <div id="definitionPopup" style="position: fixed; top: ${popupY}px; left: ${popupX}px; background: #292a2d; border: 1px solidrgb(1, 10, 36); padding: 15px; z-index: 10000; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); border-radius: 8px; max-width: 400px; font-family: 'Titillium Web', Arial, sans-serif; line-height: 1.4;">
-    <h2 style="color: #cfd0d3; font-size: 18px; margin: 0 0 10px 0; font-weight: 600; font-family: 'Titillium Web', Arial, sans-serif; line-height: 1.3;">Definition of ${word}</h2>
-    <p style="white-space: pre-line; font-size: 14px; line-height: 1.6; margin: 0 0 15px 0; color: #cfd0d3; font-family: 'Titillium Web', Arial, sans-serif; font-weight: 400;">${definitionTexts}</p>
-    <button onclick="document.getElementById('definitionPopup').remove()" style="margin-top: 10px; padding: 8px 15px; background: #007cba;outline:none; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-family: 'Titillium Web', Arial, sans-serif; font-weight: 600; line-height: 1.2;">Close</button>
+    <h2 style="color: #cfd0d3; font-size: 18px; margin: 0 0 10px 0; font-weight: 600; font-family: 'Titillium Web', Arial, sans-serif; line-height: 1.3;text-transform:capitalize">Definition : ${word}</h2>
+    <p style="white-space: pre-line; font-size: 14px; line-height: 1.6; margin: 0 0 15px 0; color: #cfd0d3; font-family: 'Titillium Web', Arial, sans-serif; font-weight: 400;text-transform: capitalize;">${definitionTexts}</p>
+    <button onclick="document.getElementById('definitionPopup').remove()" style="margin-top: 10px; padding: 8px 15px; background:rgb(6, 56, 136);outline:none; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-family: 'Titillium Web', Arial, sans-serif; font-weight: 600; line-height: 1.2;">Close</button>
     </div>`;
 
   document.body.insertAdjacentHTML("beforeend", modalHtml);
