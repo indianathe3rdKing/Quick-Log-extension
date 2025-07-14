@@ -3,9 +3,6 @@
   "name": "Quick Log Dictionary",
   "version": "0.2.0",
   "permissions": ["activeTab", "scripting"],
-  "background": {
-    "service_worker": "background.js"
-  },
   "action": {
     "default_icon": "icon.png"
   },
