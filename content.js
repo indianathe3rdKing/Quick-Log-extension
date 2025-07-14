@@ -50,15 +50,11 @@ const fetchWordDefinition = async (word) => {
       )}?key=e9299ad3-f9cc-4ecf-919e-55f25b2326a2`
     );
 
-    console.log("Response status:", response.status);
-    console.log("Response headers:", response.headers);
-
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const responseText = await response.text();
-    console.log("Raw response:", responseText);
 
     // Try to parse as JSON
     let data;
@@ -69,8 +65,6 @@ const fetchWordDefinition = async (word) => {
       console.error("Response text:", responseText);
       throw new Error("Invalid JSON response from API");
     }
-
-    console.log("Parsed data:", data);
 
     // Check if the response is valid and contains definitions
     if (!data || !Array.isArray(data) || data.length === 0) {
