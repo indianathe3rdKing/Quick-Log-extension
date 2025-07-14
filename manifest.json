@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Quick Log Dictionary",
   "version": "0.2.0",
-  "permissions": ["activeTab", "scripting", "storage"],
+  "permissions": ["activeTab", "scripting"],
   "background": {
     "service_worker": "background.js"
   },
