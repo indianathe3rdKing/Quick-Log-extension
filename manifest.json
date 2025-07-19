@@ -1,16 +1,14 @@
 {
   "manifest_version": 3,
   "name": "Quick Log Dictionary",
-  "version": "0.1.0",
-  "permissions": ["activeTab", "scripting"],
+  "version": "0.1.1",
   "action": {
     "default_icon": "icon.png"
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
+      "matches": ["https://my-portfolio-phi-three-54.vercel.app/*"],
       "js": ["content.js"]
     }
-  ],
-  "privacy-policy": "https://indianathe3rdking.github.io/Quick-Log-extension/privacy-policy.html"
+  ]
 }
