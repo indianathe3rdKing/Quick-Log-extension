@@ -64,7 +64,14 @@ const fetchWordDefinition = async (word) => {
       )}?key=e9299ad3-f9cc-4ecf-919e-55f25b2326a2`
     );
 
+    const fallBackResponse = await fetch(
+      `https://dictionaryapi.com/api/v3/references/sd4/json/${encodeURIComponent(
+        word
+      )}?key=4b8a85d3-2882-41c8-a3b9-c6756d7eeebb`
+    );
+
     if (!response.ok) {
+      response = fallBackResponse;
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
@@ -78,16 +85,6 @@ const fetchWordDefinition = async (word) => {
       console.error("JSON parse error:", parseError);
       console.error("Response text:", responseText);
       throw new Error("Invalid JSON response from API");
-    }
-
-    // Check if the response is valid and contains definitions
-    if (!data || !Array.isArray(data) || data.length === 0) {
-      throw new Error("No definitions found");
-    }
-
-    // Check if the first result is a string (suggestions) rather than an object (definitions)
-    if (typeof data[0] === "string") {
-      throw new Error("Word not found, got suggestions instead");
     }
 
     // Merriam-Webster API structure: data[0].shortdef contains the definitions
