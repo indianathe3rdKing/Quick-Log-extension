@@ -23,6 +23,8 @@ function debounce(func, delay) {
 
 let mouseX = 0;
 let mouseY = 0;
+const letterRegex = /^[A-Za-z]+$/;
+const spaceRegex = /\s/;
 
 // Track mouse position
 document.addEventListener("mousemove", (e) => {
@@ -30,12 +32,24 @@ document.addEventListener("mousemove", (e) => {
   mouseY = e.clientY;
 });
 
+const isValid = (regex, string) => {
+  // Check if the string matches the regex
+  return regex.test(string);
+};
+
 const handleSelection = () => {
   //Make unselectable text selectable
   document.body.style.userSelect = "text";
   const text = window.getSelection().toString().trim();
-  if (text) {
+
+  if (isValid(letterRegex, text)) {
     fetchWordDefinition(text);
+  } else if (isValid(spaceRegex, text)) {
+    const index = text.search(spaceRegex);
+    console.log("Space found at index:", index);
+    if (isValid(letterRegex, text[index + 1])) {
+      fetchWordDefinition(text);
+    }
   } else {
     // Remove popup when selection is cleared
     document.getElementById("definitionPopup")?.remove();
@@ -99,7 +113,9 @@ const fetchWordDefinition = async (word) => {
     });
   } catch (error) {
     console.error("Merriam-Webster API failed:", error);
-    showPopup(word, "Definition not available. Please try again.");
+    if (isValid(spaceRegex, word)) {
+      showPopup(word, "Please select a valid word without spaces.");
+    } else showPopup(word, "Definition not available. Please try again.");
   }
 };
 
@@ -116,9 +132,10 @@ function showPopup(word, definitionTexts) {
     fontLink.rel = "stylesheet";
     document.head.appendChild(fontLink);
   }
-
-  // Remove existing popup if it exists
-  document.getElementById("definitionPopup")?.remove();
+  +(
+    // Remove existing popup if it exists
+    document.getElementById("definitionPopup")?.remove()
+  );
 
   // Position popup at mouse cursor (offset slightly to avoid covering cursor)
   const popupX = mouseX + 10;
