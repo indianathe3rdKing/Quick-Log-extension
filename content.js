@@ -58,24 +58,28 @@ const handleSelection = () => {
 
 const fetchWordDefinition = async (word) => {
   try {
-    const response = await fetch(
+    let response = await fetch(
       `https://dictionaryapi.com/api/v3/references/collegiate/json/${encodeURIComponent(
         word
       )}?key=e9299ad3-f9cc-4ecf-919e-55f25b2326a2`
     );
 
-    const fallBackResponse = await fetch(
-      `https://dictionaryapi.com/api/v3/references/sd4/json/${encodeURIComponent(
-        word
-      )}?key=4b8a85d3-2882-41c8-a3b9-c6756d7eeebb`
-    );
-
+    // If the first API fails, try the fallback
     if (!response.ok) {
-      response = fallBackResponse;
-      throw new Error(`HTTP error! status: ${response.status}`);
+      console.log("Primary API failed, trying fallback...");
+      response = await fetch(
+        `https://dictionaryapi.com/api/v3/references/sd4/json/${encodeURIComponent(
+          word
+        )}?key=4b8a85d3-2882-41c8-a3b9-c6756d7eeebb`
+      );
+
+      if (!response.ok) {
+        throw new Error(`Both APIs failed! Status: ${response.status}`);
+      }
     }
 
     const responseText = await response.text();
+    console.log("Response text:", responseText);
 
     // Try to parse as JSON
     let data;
@@ -87,12 +91,15 @@ const fetchWordDefinition = async (word) => {
       throw new Error("Invalid JSON response from API");
     }
 
-    // Merriam-Webster API structure: data[0].shortdef contains the definitions
-    const definitions = data[0].shortdef || [];
+    console.log("Parsed data:", data);
 
-    if (definitions.length === 0) {
-      throw new Error("No definitions available");
+    // Check if we got suggestions instead of definitions
+    if (typeof data[0] === "string") {
+      throw new Error("Word not found, got suggestions instead");
     }
+
+    // Merriam-Webster API structure: data[0].shortdef contains the definitions
+    const definitions = data[0].shortdef || data[1].shortdef || [];
 
     // Get all definitions as an array
     const definitionTexts = definitions
@@ -109,10 +116,12 @@ const fetchWordDefinition = async (word) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("Merriam-Webster API failed:", error);
+    console.error("API failed:", error);
     if (isValid(spaceRegex, word)) {
       showPopup(word, "Please select a valid word without spaces.");
-    } else showPopup(word, "Definition not available. Please try again.");
+    } else {
+      showPopup(word, "Definition not available. Please try again.");
+    }
   }
 };
 
