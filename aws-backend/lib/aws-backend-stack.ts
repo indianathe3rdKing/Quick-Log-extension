@@ -5,10 +5,14 @@ import { Runtime } from "aws-cdk-lib/aws-lambda";
 import path from "path";
 import * as apigateway from "aws-cdk-lib/aws-apigatewayv2";
 import * as apigateway_intergrations from "aws-cdk-lib/aws-apigatewayv2-integrations";
-import { Method } from "aws-cdk-lib/aws-apigateway";
+import { QuickLogDynamoDBStack } from "./dynamodb-stack";
+
+interface AwsBackendStackProps extends cdk.StackProps {
+  quickLogDynamoDBStack: QuickLogDynamoDBStack;
+}
 
 export class AwsBackendStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props?: AwsBackendStackProps) {
     super(scope, id, props);
 
     //Create a single Lambda function for all operations

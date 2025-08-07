@@ -9,6 +9,8 @@ export class QuickLogDynamoDBStack extends cdk.Stack {
 
     this.usersTable = new dynamodb.Table(this, "UsersTable", {
       partitionKey: { name: "id", type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
       tableName: `${this.stackName}-user-data`,
     });
   }
