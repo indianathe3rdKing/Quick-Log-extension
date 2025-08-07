@@ -1,0 +1,29 @@
+
+  @URL = https://r1qrdf98db.execute-api.eu-north-1.amazonaws.com
+
+### Get all users
+GET {{URL}}/users
+
+### Get user by ID
+GET {{URL}}/users/1
+
+### Create a new user
+POST {{URL}}/users
+Content-Type: application/json
+
+{
+    "name": "John Doe",
+    "email": "john.doe@example.com"
+}
+
+### Update user by ID
+PUT {{URL}}/users/1
+Content-Type: application/json
+
+{
+    "name": "Jane Doe",
+    "email": "jane.doe@example.com"
+}
+
+### Delete user by ID
+DELETE {{URL}}/users/1

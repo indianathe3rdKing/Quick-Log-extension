@@ -17,7 +17,7 @@ export const handler = async (
     }
 
     if (path.startsWith("/users/")) {
-      const userId = path.split("/users/")[2];
+      const userId = path.split("/users/")[1];
 
       if (!userId) {
         return {
@@ -27,7 +27,7 @@ export const handler = async (
       }
       switch (method) {
         case "GET":
-          return GetUserdata(userId);
+          return GetUserData(userId);
         case "PUT":
           return UpdateUser(event);
         case "DELETE":
@@ -48,7 +48,7 @@ export const handler = async (
   }
 };
 
-async function GetUserdata(userId: string): Promise<APIGatewayProxyResultV2> {
+async function GetUserData(userId: string): Promise<APIGatewayProxyResultV2> {
   return {
     statusCode: 200,
     body: JSON.stringify({ message: "User data created successfully" }),
