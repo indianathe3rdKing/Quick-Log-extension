@@ -12,7 +12,7 @@ interface AwsBackendStackProps extends cdk.StackProps {
 }
 
 export class AwsBackendStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: AwsBackendStackProps) {
+  constructor(scope: Construct, id: string, props: AwsBackendStackProps) {
     super(scope, id, props);
 
     //Create a single Lambda function for all operations
@@ -21,6 +21,9 @@ export class AwsBackendStack extends cdk.Stack {
       entry: path.join(__dirname, "../src/lambda/handler.ts"),
       handler: "handler",
       functionName: `${this.stackName}-handler`,
+      environment: {
+        TABLE_NAME: props.quickLogDynamoDBStack.usersTable.tableName,
+      },
     });
 
     const httpApi = new apigateway.HttpApi(this, "UserDataApi", {
