@@ -12,12 +12,12 @@ POST {{URL}}/users
 Content-Type: application/json
 
 {
-    "name": "John Doe",
-    "email": "john.doe@example.com"
+    "name": "John De",
+    "email": "john.d@example.com"
 }
 
 ### Update user by ID
-PUT {{URL}}/users/1
+PUT {{URL}}/users/49e6a687-e233-4588-954a-06af1a5f64b0
 Content-Type: application/json
 
 {

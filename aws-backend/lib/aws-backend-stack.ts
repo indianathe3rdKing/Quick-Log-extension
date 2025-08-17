@@ -26,6 +26,8 @@ export class AwsBackendStack extends cdk.Stack {
       },
     });
 
+    props.quickLogDynamoDBStack.usersTable.grantReadWriteData(useHandler);
+
     const httpApi = new apigateway.HttpApi(this, "UserDataApi", {
       apiName: `${this.stackName}-quick-log-api`,
       description: "API for users saved words to the cloud",

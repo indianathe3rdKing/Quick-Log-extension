@@ -10,11 +10,26 @@ import {
 } from "@aws-sdk/lib-dynamodb";
 import { v4 as uuidv4 } from "uuid";
 import { faker } from "@faker-js/faker";
-import { emit } from "process";
 
 const client = new DynamoDBClient({});
 const dynamodb = DynamoDBDocumentClient.from(client);
 const TABLE_NAME = process.env.TABLE_NAME;
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+  "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+};
+
+const createResponse = (
+  statusCode: number,
+  body: any
+): APIGatewayProxyResultV2 => ({
+  statusCode,
+  headers: corsHeaders,
+  body: typeof body === "string" ? body : JSON.stringify(body),
+});
 
 export const handler = async (
   event: APIGatewayProxyEventV2
@@ -36,10 +51,7 @@ export const handler = async (
       const userId = path.split("/users/")[1];
 
       if (!userId) {
-        return {
-          statusCode: 400,
-          body: JSON.stringify({ message: "User ID is required" }),
-        };
+        return createResponse(400, { message: "User ID is required" });
       }
       switch (method) {
         case "GET":
@@ -51,16 +63,10 @@ export const handler = async (
       }
     }
 
-    return {
-      statusCode: 404,
-      body: JSON.stringify({ message: " Data not found" }),
-    };
+    return createResponse(404, { message: "Data not found" });
   } catch (error) {
-    console.error("Error processing request:", error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ message: "Internal Server Error" }),
-    };
+    console.error("Caught error in Lambda :", error);
+    return createResponse(500, { message: "Internal Server Error" });
   }
 };
 
@@ -72,15 +78,9 @@ async function GetUserData(userId: string): Promise<APIGatewayProxyResultV2> {
     })
   );
   if (!result.Item) {
-    return {
-      statusCode: 404,
-      body: JSON.stringify({ message: "User not found" }),
-    };
+    return createResponse(404, { message: "User not found" });
   }
-  return {
-    statusCode: 200,
-    body: JSON.stringify(result.Item),
-  };
+  return createResponse(200, result.Item);
 }
 
 async function CreateUser(
@@ -90,7 +90,7 @@ async function CreateUser(
 
   const user = {
     id: userId,
-    namea: faker.person.fullName(),
+    name: faker.person.fullName(),
     email: faker.internet.email(),
     createdAt: new Date().toISOString(),
   };
