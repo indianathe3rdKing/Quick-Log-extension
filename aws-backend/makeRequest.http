@@ -5,7 +5,7 @@
 GET {{URL}}/users
 
 ### Get user by ID
-GET {{URL}}/users/1
+GET {{URL}}/users/010745c9-d126-438a-b889-e2ebd2b004d2
 
 ### Create a new user
 POST {{URL}}/users

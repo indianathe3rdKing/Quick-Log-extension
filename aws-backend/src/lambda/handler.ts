@@ -47,6 +47,14 @@ export const handler = async (
       }
     }
 
+    if (path.startsWith("/users/{id}/{word}")) {
+      const word = path.split("/users/{id}/")[1];
+
+      if (word.length == 0) {
+        return createResponse(400, { message: "No words Saved" });
+      }
+    }
+
     if (path.startsWith("/users/")) {
       const userId = path.split("/users/")[1];
 
@@ -87,11 +95,12 @@ async function CreateUser(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResultV2> {
   const userId = uuidv4();
+  const { name, email } = JSON.parse(event.body!);
 
   const user = {
     id: userId,
-    name: faker.person.fullName(),
-    email: faker.internet.email(),
+    name,
+    email,
     createdAt: new Date().toISOString(),
   };
 

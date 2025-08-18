@@ -6,6 +6,7 @@ import path from "path";
 import * as apigateway from "aws-cdk-lib/aws-apigatewayv2";
 import * as apigateway_intergrations from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import { QuickLogDynamoDBStack } from "./dynamodb-stack";
+import { Method } from "aws-cdk-lib/aws-apigateway";
 
 interface AwsBackendStackProps extends cdk.StackProps {
   quickLogDynamoDBStack: QuickLogDynamoDBStack;
@@ -65,6 +66,11 @@ export class AwsBackendStack extends cdk.Stack {
         path: "/users/{id}",
         method: apigateway.HttpMethod.DELETE,
         name: "DeleteUser",
+      },
+      {
+        path: "/users/{word}",
+        method: apigateway.HttpMethod.POST,
+        name: "SavedWords",
       },
     ];
 
