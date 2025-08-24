@@ -68,9 +68,20 @@ export class AwsBackendStack extends cdk.Stack {
         name: "DeleteUser",
       },
       {
-        path: "/users/{word}",
+        path: "/users/{id}/words",
         method: apigateway.HttpMethod.POST,
-        name: "SavedWords",
+        name: "SaveWord",
+      },
+      {
+        path: "/users/{id}/words",
+        method: apigateway.HttpMethod.DELETE,
+        name: "DeleteWord",
+      },
+
+      {
+        path: "/users/{id}/words",
+        method: apigateway.HttpMethod.GET,
+        name: "AllWords",
       },
     ];
 

@@ -9,7 +9,6 @@ import {
   ScanCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { v4 as uuidv4 } from "uuid";
-import { faker } from "@faker-js/faker";
 
 const client = new DynamoDBClient({});
 const dynamodb = DynamoDBDocumentClient.from(client);
@@ -47,17 +46,30 @@ export const handler = async (
       }
     }
 
-    if (path.startsWith("/users/{id}/{word}")) {
-      const word = path.split("/users/{id}/")[1];
+    // Handle word operations: /users/{id}/words
+    if (path.includes("/words")) {
+      const pathParts = path.split("/");
+      const userId = pathParts[2]; // users/{id}/words
 
-      if (word.length == 0) {
-        return createResponse(400, { message: "No words Saved" });
+      if (!userId) {
+        return createResponse(400, {
+          message: `User ID is required ${userId}`,
+        });
+      }
+
+      switch (method) {
+        case "POST":
+          return SaveWord(event, userId);
+        case "DELETE":
+          return DeleteWord(event, userId);
+        case "GET":
+          return AllWords(event, userId);
       }
     }
 
+    // Handle user operations: /users/{id}
     if (path.startsWith("/users/")) {
       const userId = path.split("/users/")[1];
-
       if (!userId) {
         return createResponse(400, { message: "User ID is required" });
       }
@@ -71,7 +83,7 @@ export const handler = async (
       }
     }
 
-    return createResponse(404, { message: "Data not found" });
+    return createResponse(404, { message: "Route not found" });
   } catch (error) {
     console.error("Caught error in Lambda :", error);
     return createResponse(500, { message: "Internal Server Error" });
@@ -102,6 +114,7 @@ async function CreateUser(
     name,
     email,
     createdAt: new Date().toISOString(),
+    words: [] as string[],
   };
 
   await dynamodb.send(
@@ -170,5 +183,110 @@ async function DeleteUser(userId: string): Promise<APIGatewayProxyResultV2> {
   return {
     statusCode: 200,
     body: JSON.stringify({ message: "User deleted" }),
+  };
+}
+
+async function SaveWord(
+  event: APIGatewayProxyEventV2,
+  userId: string
+): Promise<APIGatewayProxyResultV2> {
+  // Get the word from request body
+  const { word } = JSON.parse(event.body || "{}");
+
+  if (!word) {
+    return createResponse(400, { message: "No words saved" });
+  }
+  const words = await dynamodb.send(
+    new UpdateCommand({
+      TableName: TABLE_NAME,
+      Key: { id: userId },
+      UpdateExpression:
+        "SET words = list_append(if_not_exists(words, :empty),:word)",
+      ExpressionAttributeValues: {
+        ":empty": [],
+        ":word": [word],
+      },
+      ConditionExpression: "attribute_exists(id)",
+      ReturnValues: "UPDATED_NEW",
+    })
+  );
+
+  return {
+    statusCode: 200,
+    body: JSON.stringify({ words: words.Attributes }),
+  };
+}
+
+async function DeleteWord(
+  event: APIGatewayProxyEventV2,
+  userId: string
+): Promise<APIGatewayProxyResultV2> {
+  // Get the word from request body or query params
+  const { word } = JSON.parse(event.body || "{}");
+  const target = (word ?? "").trim().toLowerCase();
+
+  // First, get the current user's words
+  const getUserResult = await dynamodb.send(
+    new GetCommand({
+      TableName: TABLE_NAME,
+      Key: { id: userId },
+    })
+  );
+
+  if (!getUserResult.Item) {
+    return createResponse(404, { message: "User not found" });
+  }
+
+  const currentWords: any[] = getUserResult.Item.words ?? [];
+
+  // Remove the word from the array
+  const updatedWords = currentWords.filter((w: any) => {
+    const value = (typeof w === "string" ? w : w?.word) ?? "";
+    return value.trim().toLowerCase() !== target;
+  });
+
+  // Update the user's words in the database
+  await dynamodb.send(
+    new UpdateCommand({
+      TableName: TABLE_NAME,
+      Key: { id: userId },
+      UpdateExpression: "SET #words = :words",
+      ExpressionAttributeNames: {
+        "#words": "words",
+      },
+      ExpressionAttributeValues: {
+        ":words": updatedWords,
+      },
+      ReturnValues: "UPDATED_NEW",
+    })
+  );
+
+  return createResponse(200, {
+    message: "Word deleted successfully",
+    userId,
+    word,
+    remainingWords: updatedWords,
+  });
+}
+
+async function AllWords(
+  event: APIGatewayProxyEventV2,
+  userId: string
+): Promise<APIGatewayProxyResultV2> {
+  const words = await dynamodb.send(
+    new GetCommand({
+      TableName: TABLE_NAME,
+      Key: { id: userId },
+      ProjectionExpression: "#words",
+      ExpressionAttributeNames: {
+        "#words": "words",
+      },
+    })
+  );
+  return {
+    statusCode: 200,
+    body: JSON.stringify({
+      words: words.Item?.words || [],
+    }),
   };
 }
