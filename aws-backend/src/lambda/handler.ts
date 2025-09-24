@@ -9,6 +9,7 @@ import {
   ScanCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { v4 as uuidv4 } from "uuid";
+import * as bcryptjs from "bcryptjs";
 
 const client = new DynamoDBClient({});
 const dynamodb = DynamoDBDocumentClient.from(client);
@@ -90,6 +91,13 @@ export const handler = async (
   }
 };
 
+export async function hashPassword(password: string): Promise<string> {
+  const saltRounds = 10;
+
+  const hashPassword = await bcryptjs.hash(password, saltRounds);
+  return hashPassword;
+}
+
 // User functions
 
 async function GetUserData(userId: string): Promise<APIGatewayProxyResultV2> {
@@ -110,13 +118,15 @@ async function CreateUser(
 ): Promise<APIGatewayProxyResultV2> {
   const userId = uuidv4();
   const { name, surname, email, password } = JSON.parse(event.body!);
+  // Hash the password before storing it
+  const passwordHash = await hashPassword(password);
 
   const user = {
     id: userId,
     name,
     surname,
     email,
-    password,
+    passwordHash,
     createdAt: new Date().toISOString(),
     words: [] as string[],
   };
@@ -125,6 +135,7 @@ async function CreateUser(
     new PutCommand({
       TableName: TABLE_NAME,
       Item: user,
+      ConditionExpression: "attribute_not_exists(pk)",
     })
   );
 

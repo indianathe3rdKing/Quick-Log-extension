@@ -12,10 +12,10 @@ POST {{URL}}/users
 Content-Type: application/json
 
 {
-    "name": "John",
-    "surname": "Doe",
-    "email": "john.d@exple.com",
-    "password": "password123"
+    "name": "Dolo",
+    "surname": "nge",
+    "email": "john.d@money.com",
+    "password": "taste111"
 }
 
 ### Update user by ID
