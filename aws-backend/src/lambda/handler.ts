@@ -10,6 +10,7 @@ import {
 } from "@aws-sdk/lib-dynamodb";
 import { v4 as uuidv4 } from "uuid";
 import * as bcryptjs from "bcryptjs";
+import { json } from "stream/consumers";
 
 const client = new DynamoDBClient({});
 const dynamodb = DynamoDBDocumentClient.from(client);
@@ -44,6 +45,13 @@ export const handler = async (
           return GetAllUsers(event);
         case "POST":
           return CreateUser(event);
+      }
+    }
+
+    if (path === "/login") {
+      switch (method) {
+        case "POST":
+          return loginUser(event);
       }
     }
 
@@ -91,11 +99,63 @@ export const handler = async (
   }
 };
 
-export async function hashPassword(password: string): Promise<string> {
+// Hash password functions
+
+async function hashPassword(password: string): Promise<string> {
   const saltRounds = 10;
 
   const hashPassword = await bcryptjs.hash(password, saltRounds);
   return hashPassword;
+}
+
+async function verifyPassword(
+  plainPassword: string,
+  hashPassword: string
+): Promise<boolean> {
+  try {
+    const isMatch = await bcryptjs.compare(plainPassword, hashPassword);
+    return isMatch;
+  } catch (error) {
+    console.error("Error verifying password:", error);
+    throw new Error("Error verifying password");
+  }
+}
+
+//Login Funtion
+async function loginUser(
+  event: APIGatewayProxyEventV2
+): Promise<APIGatewayProxyResultV2> {
+  try {
+    const { email, password } = JSON.parse(event.body!);
+    const result = await dynamodb.send(
+      new ScanCommand({
+        TableName: TABLE_NAME,
+        FilterExpression: "#email = :email",
+        ExpressionAttributeNames: {
+          "#email": "email",
+        },
+        ExpressionAttributeValues: {
+          ":email": email,
+        },
+      })
+    );
+
+    if (!result.Items || result.Items.length === 0) {
+      return createResponse(401, { message: "Invalid email or password" });
+    }
+
+    const user = result.Items[0];
+    // Verify the password
+    const isValid = await verifyPassword(password, user.passwordHash);
+
+    if (!isValid) {
+      return createResponse(401, { message: "Invalid email or password" });
+    }
+    return createResponse(200, { message: "Login successful", user });
+  } catch (error) {
+    console.error("Error logging in user:", error);
+    throw new Error("Error logging in user");
+  }
 }
 
 // User functions
@@ -135,7 +195,7 @@ async function CreateUser(
     new PutCommand({
       TableName: TABLE_NAME,
       Item: user,
-      ConditionExpression: "attribute_not_exists(pk)",
+      ConditionExpression: "attribute_not_exists(email)",
     })
   );
 

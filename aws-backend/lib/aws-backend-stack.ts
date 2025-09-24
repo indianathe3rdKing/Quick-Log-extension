@@ -83,6 +83,11 @@ export class AwsBackendStack extends cdk.Stack {
         method: apigateway.HttpMethod.GET,
         name: "AllWords",
       },
+      {
+        path: "/login",
+        method: apigateway.HttpMethod.POST,
+        name: "loginUser",
+      },
     ];
 
     //Create routes

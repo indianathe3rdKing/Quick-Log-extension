@@ -4,6 +4,15 @@
 ### Get all users
 GET {{URL}}/users
 
+### User login
+POST {{URL}}/login
+Content-Type: application/json
+
+{
+    "email": "mike.d@mon.com",
+    "password": "tasdste123"
+}
+
 ### Get user by ID
 GET {{URL}}/users/010745c9-d126-438a-b889-e2ebd2b004d2
 
@@ -12,10 +21,10 @@ POST {{URL}}/users
 Content-Type: application/json
 
 {
-    "name": "Dolo",
-    "surname": "nge",
-    "email": "john.d@money.com",
-    "password": "taste111"
+    "name": "Dollas",
+    "surname": "ngeel",
+    "email": "mike.d@mon.com",
+    "password": "tasdste123"
 }
 
 ### Update user by ID
