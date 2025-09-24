@@ -90,6 +90,8 @@ export const handler = async (
   }
 };
 
+// User functions
+
 async function GetUserData(userId: string): Promise<APIGatewayProxyResultV2> {
   const result = await dynamodb.send(
     new GetCommand({
@@ -136,20 +138,25 @@ async function UpdateUser(
   event: APIGatewayProxyEventV2,
   userId: string
 ): Promise<APIGatewayProxyResultV2> {
-  const { name, email } = JSON.parse(event.body!);
+  const { name, surname, email, password } = JSON.parse(event.body!);
 
   const result = await dynamodb.send(
     new UpdateCommand({
       TableName: TABLE_NAME,
       Key: { id: userId },
-      UpdateExpression: "SET #name = :name, #email = :email",
+      UpdateExpression:
+        "SET #name = :name,#surname= :surname, #email = :email,#password=:password",
       ExpressionAttributeNames: {
         "#name": "name",
+        "#surname": "surname",
         "#email": "email",
+        "#password": "password",
       },
       ExpressionAttributeValues: {
         ":name": name || null,
+        ":surname": surname || null,
         ":email": email || null,
+        password: password || null,
       },
       ReturnValues: "ALL_NEW",
     })
@@ -187,6 +194,8 @@ async function DeleteUser(userId: string): Promise<APIGatewayProxyResultV2> {
     body: JSON.stringify({ message: "User deleted" }),
   };
 }
+
+// Word functions
 
 async function SaveWord(
   event: APIGatewayProxyEventV2,

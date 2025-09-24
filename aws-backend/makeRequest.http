@@ -12,8 +12,10 @@ POST {{URL}}/users
 Content-Type: application/json
 
 {
-    "name": "John De",
-    "email": "john.d@example.com"
+    "name": "John",
+    "surname": "Doe",
+    "email": "john.d@exple.com",
+    "password": "password123"
 }
 
 ### Update user by ID
@@ -21,8 +23,8 @@ PUT {{URL}}/users/bd148531-f6dc-497f-ac69-38543b911ce6
 Content-Type: application/json
 
 {
-    "name": "Janjjjkne Doe",
-    "email": "janse.doe@example.com"
+    "name": "Janjj Doe",
+    "email": "janse.doe@exale.com"
 }
 
 ### Delete user by ID
@@ -33,7 +35,7 @@ POST {{URL}}/users/bd148531-f6dc-497f-ac69-38543b911ce6/words
 Content-Type: application/json
 
 {
-    "word": "word",
+    "word": "sin",
     "definition": "a thing characteristic of its kind"
 }
 
@@ -45,5 +47,5 @@ DELETE {{URL}}/users/bd148531-f6dc-497f-ac69-38543b911ce6/words
 Content-Type: application/json
 
 {
-    "word": "thing"
+    "word": "sin"
 }
