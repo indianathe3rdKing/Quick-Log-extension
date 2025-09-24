@@ -107,12 +107,14 @@ async function CreateUser(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResultV2> {
   const userId = uuidv4();
-  const { name, email } = JSON.parse(event.body!);
+  const { name, surname, email, password } = JSON.parse(event.body!);
 
   const user = {
     id: userId,
     name,
+    surname,
     email,
+    password,
     createdAt: new Date().toISOString(),
     words: [] as string[],
   };

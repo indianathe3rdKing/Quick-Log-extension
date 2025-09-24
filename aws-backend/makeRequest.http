@@ -45,5 +45,5 @@ DELETE {{URL}}/users/bd148531-f6dc-497f-ac69-38543b911ce6/words
 Content-Type: application/json
 
 {
-    "word": "example"
+    "word": "thing"
 }
